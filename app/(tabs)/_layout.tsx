@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,10 +8,18 @@ import { useStore } from '@/store/useStore';
 
 export default function TabLayout() {
   const { colors, isDark } = useTheme();
-  const cartItemCount = useStore(state => state.cart.length);
-  const activeOrders = useStore(state => 
-    state.orders.filter(o => !['delivered', 'cancelled', 'order_failed'].includes(o.status))
-  );
+  
+  // Use proper Zustand selectors to subscribe to specific state slices
+  const cart = useStore(state => state.cart);
+  const orders = useStore(state => state.orders);
+  
+  // Cache derived values with useMemo to prevent infinite loops
+  const cartItemCount = useMemo(() => cart.length, [cart]);
+  const activeOrdersCount = useMemo(() => {
+    return orders.filter(o => 
+      !['delivered', 'cancelled', 'order_failed'].includes(o.status)
+    ).length;
+  }, [orders]);
 
   return (
     <Tabs
@@ -78,7 +86,7 @@ export default function TabLayout() {
                 size={24} 
                 color={color} 
               />
-              {activeOrders.length > 0 && (
+              {activeOrdersCount > 0 && (
                 <View style={[styles.badge, { backgroundColor: colors.error }]}>
                   <View style={styles.badgeDot} />
                 </View>
