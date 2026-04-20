@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "FoodFlow",
+    "slug": "project-a29e0eec",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "foodflow",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#f97316",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.foodflow.app",
+      "config": {
+        "googleMapsApiKey": ""
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to show nearby restaurants and track your delivery.",
+        "NSLocationAlwaysUsageDescription": "We need your location to show nearby restaurants and track your delivery."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f97316"
+      },
+      "package": "com.foodflow.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FoodFlow to use your location to find nearby restaurants."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow FoodFlow to access your photos to update your profile picture."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
