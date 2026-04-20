@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { User, Address, PaymentMethod } from '@/types';
 
+// React Native compatible unique ID generator
+const generateId = (): string => {
+  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+};
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -23,7 +28,7 @@ interface AuthState {
 }
 
 const mockUser: User = {
-  id: crypto.randomUUID(),
+  id: generateId(),
   name: 'Alex Johnson',
   email: 'alex@example.com',
   phone: '+1 555-123-4567',
@@ -141,7 +146,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       const newUser: User = {
         ...mockUser,
-        id: crypto.randomUUID(),
+        id: generateId(),
         name,
         email,
         phone,
@@ -213,7 +218,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (user) {
       const newAddress: Address = {
         ...address,
-        id: crypto.randomUUID(),
+        id: generateId(),
       };
       set({ 
         user: { 
@@ -271,7 +276,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (user) {
       const newMethod: PaymentMethod = {
         ...method,
-        id: crypto.randomUUID(),
+        id: generateId(),
       };
       set({
         user: {
