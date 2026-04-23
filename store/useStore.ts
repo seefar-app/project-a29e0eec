@@ -13,6 +13,11 @@ import {
   StatusHistoryItem,
 } from '@/types';
 
+// React Native compatible unique ID generator
+const generateId = (): string => {
+  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+};
+
 interface StoreState {
   // Restaurants
   restaurants: Restaurant[];
@@ -542,7 +547,7 @@ export const useStore = create<StoreState>((set, get) => ({
     itemTotal *= quantity;
     
     const cartItem: CartItem = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       menuItem: item,
       quantity,
       customizations,
@@ -617,7 +622,7 @@ export const useStore = create<StoreState>((set, get) => ({
     const estimatedDelivery = new Date(now.getTime() + 35 * 60000); // 35 minutes
     
     const newOrder: Order = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       userId: 'user1',
       restaurant,
       items: [...cart],
