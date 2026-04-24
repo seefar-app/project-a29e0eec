@@ -124,10 +124,13 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
             <Image source={{ uri: item.imageUrl }} style={styles.image} contentFit="cover" />
             {item.isAvailable && (
               <Pressable
-                style={[styles.addButton, { backgroundColor: colors.primary }]}
+                style={[styles.addButton, { 
+                  backgroundColor: colors.primary,
+                  shadowColor: colors.primary,
+                }]}
                 onPress={handleQuickAdd}
               >
-                <Ionicons name="add" size={20} color="#ffffff" />
+                <Ionicons name="add" size={22} color="#ffffff" />
               </Pressable>
             )}
           </View>
@@ -143,10 +146,10 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
         <View style={[styles.modal, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <Pressable onPress={() => setShowCustomization(false)}>
-              <Ionicons name="close" size={28} color={colors.text} />
+              <Ionicons name="close" size={30} color={colors.text} />
             </Pressable>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Customize</Text>
-            <View style={{ width: 28 }} />
+            <View style={{ width: 30 }} />
           </View>
 
           <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
@@ -205,7 +208,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
                           isSelected && { borderColor: colors.primary, backgroundColor: colors.primary },
                         ]}
                       >
-                        {isSelected && <Ionicons name="checkmark" size={16} color="#ffffff" />}
+                        {isSelected && <Ionicons name="checkmark" size={18} color="#ffffff" />}
                       </View>
                     </Pressable>
                   );
@@ -238,7 +241,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
                     }
                   }}
                 >
-                  <Ionicons name="remove" size={20} color={colors.text} />
+                  <Ionicons name="remove" size={22} color={colors.text} />
                 </Pressable>
                 <Text style={[styles.quantityText, { color: colors.text }]}>{quantity}</Text>
                 <Pressable
@@ -248,13 +251,17 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
                     setQuantity(quantity + 1);
                   }}
                 >
-                  <Ionicons name="add" size={20} color={colors.text} />
+                  <Ionicons name="add" size={22} color={colors.text} />
                 </Pressable>
               </View>
             </View>
           </ScrollView>
 
-          <View style={[styles.modalFooter, { borderTopColor: colors.border, backgroundColor: colors.card }]}>
+          <View style={[styles.modalFooter, { 
+            borderTopColor: colors.border, 
+            backgroundColor: colors.card,
+            shadowColor: colors.shadowStrong,
+          }]}>
             <Button
               title={`Add to Cart • $${calculateTotal().toFixed(2)}`}
               onPress={handleAddToCart}
@@ -270,64 +277,68 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   content: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
   },
   info: {
     flex: 1,
   },
   name: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   description: {
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 10,
+    lineHeight: 20,
+    letterSpacing: 0.2,
   },
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
+    gap: 14,
+    marginBottom: 10,
   },
   price: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
+    letterSpacing: 0.3,
   },
   calories: {
     fontSize: 13,
+    letterSpacing: 0.1,
   },
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 7,
   },
   imageContainer: {
     position: 'relative',
   },
   image: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
+    width: 110,
+    height: 110,
+    borderRadius: 16,
   },
   addButton: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    bottom: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   modal: {
     flex: 1,
@@ -337,124 +348,134 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderBottomWidth: 1,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
+    letterSpacing: 0.4,
   },
   modalContent: {
     flex: 1,
   },
   modalImage: {
     width: '100%',
-    height: 240,
+    height: 260,
   },
   modalInfo: {
-    padding: 20,
+    padding: 24,
   },
   modalItemName: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 10,
+    letterSpacing: 0.5,
   },
   modalItemDescription: {
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 12,
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 14,
+    letterSpacing: 0.2,
   },
   modalItemPrice: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
+    letterSpacing: 0.4,
   },
   customizationGroup: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    marginBottom: 28,
   },
   groupHeader: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   groupName: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   groupInfo: {
-    fontSize: 13,
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    marginBottom: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: 2,
+    marginBottom: 10,
   },
   optionInfo: {
     flex: 1,
   },
   optionName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 3,
+    letterSpacing: 0.2,
   },
   optionPrice: {
-    fontSize: 13,
+    fontSize: 14,
+    letterSpacing: 0.1,
   },
   radio: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   instructionsSection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    marginBottom: 28,
   },
   instructionsLabel: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 14,
+    letterSpacing: 0.3,
   },
   quantitySection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    marginBottom: 28,
   },
   quantityLabel: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 14,
+    letterSpacing: 0.3,
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 18,
   },
   quantityButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
   quantityText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    minWidth: 40,
+    minWidth: 44,
     textAlign: 'center',
+    letterSpacing: 0.4,
   },
   modalFooter: {
-    padding: 20,
+    padding: 24,
     borderTopWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 12,
   },
 });

@@ -7,7 +7,6 @@ import {
   TextInput,
   Pressable,
   RefreshControl,
-  FlatList,
   Animated,
   Dimensions,
   LayoutAnimation,
@@ -17,7 +16,8 @@ import {
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/useTheme';
@@ -25,10 +25,8 @@ import { useLocation } from '@/hooks/useLocation';
 import { useStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { RestaurantCard } from '@/components/shared/RestaurantCard';
-import { LocationInput } from '@/components/shared/LocationInput';
-import { SkeletonCard, Skeleton } from '@/components/ui/Skeleton';
+import { SkeletonCard } from '@/components/ui/Skeleton';
 import { Badge } from '@/components/ui/Badge';
-import { Colors } from '@/constants/Colors';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -73,7 +71,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchRestaurants();
-    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
   }, []);
 
   useEffect(() => {
@@ -118,8 +116,8 @@ export default function HomeScreen() {
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.9],
+    inputRange: [0, 120],
+    outputRange: [1, 0.95],
     extrapolate: 'clamp',
   });
 
@@ -135,7 +133,7 @@ export default function HomeScreen() {
           <View style={styles.headerTop}>
             <Pressable style={styles.deliverySelector}>
               <View style={styles.deliveryIcon}>
-                <Ionicons name="location" size={18} color={colors.primary} />
+                <Ionicons name="location" size={20} color={colors.primary} />
               </View>
               <View style={styles.deliveryTextContainer}>
                 <Text style={styles.deliveryLabel}>Deliver to</Text>
@@ -143,7 +141,7 @@ export default function HomeScreen() {
                   <Text style={styles.deliveryAddressText} numberOfLines={1}>
                     {selectedDeliveryAddress?.label || 'Select address'}
                   </Text>
-                  <Ionicons name="chevron-down" size={16} color="#ffffff" />
+                  <Ionicons name="chevron-down" size={18} color="#ffffff" />
                 </View>
               </View>
             </Pressable>
@@ -160,30 +158,32 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          {/* Search Bar */}
+          {/* Search Bar with Glassmorphic Effect */}
           <View style={styles.searchContainer}>
-            <View style={[styles.searchBar, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <Ionicons name="search" size={20} color="rgba(255,255,255,0.8)" />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search restaurants or cuisines..."
-                placeholderTextColor="rgba(255,255,255,0.6)"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-              {searchQuery.length > 0 && (
-                <Pressable onPress={() => setSearchQuery('')}>
-                  <Ionicons name="close-circle" size={20} color="rgba(255,255,255,0.8)" />
-                </Pressable>
-              )}
-            </View>
+            <BlurView intensity={20} tint="light" style={styles.searchBarBlur}>
+              <View style={styles.searchBar}>
+                <Ionicons name="search" size={22} color="rgba(255,255,255,0.9)" />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search restaurants or cuisines..."
+                  placeholderTextColor="rgba(255,255,255,0.7)"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable onPress={() => setSearchQuery('')}>
+                    <Ionicons name="close-circle" size={22} color="rgba(255,255,255,0.9)" />
+                  </Pressable>
+                )}
+              </View>
+            </BlurView>
             <Pressable
               style={[styles.filterButton, showMap && { backgroundColor: '#ffffff' }]}
               onPress={toggleMapView}
             >
               <Ionicons
                 name={showMap ? 'list' : 'map'}
-                size={22}
+                size={24}
                 color={showMap ? colors.primary : '#ffffff'}
               />
             </Pressable>
@@ -260,13 +260,14 @@ export default function HomeScreen() {
                       styles.cuisineItem,
                       {
                         backgroundColor: isSelected ? colors.primary : colors.backgroundSecondary,
+                        shadowColor: isSelected ? colors.primary : colors.shadow,
                       },
                     ]}
                     onPress={() => handleCuisinePress(cuisine.id)}
                   >
                     <Ionicons
                       name={cuisine.icon as any}
-                      size={20}
+                      size={22}
                       color={isSelected ? '#ffffff' : colors.textSecondary}
                     />
                     <Text
@@ -324,7 +325,7 @@ export default function HomeScreen() {
               </View>
             ) : filteredRestaurants.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons name="restaurant-outline" size={64} color={colors.textMuted} />
+                <Ionicons name="restaurant-outline" size={72} color={colors.textMuted} />
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>No restaurants found</Text>
                 <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                   Try adjusting your filters or search query
@@ -351,13 +352,13 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   deliverySelector: {
     flexDirection: 'row',
@@ -365,54 +366,68 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   deliveryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   deliveryTextContainer: {
     flex: 1,
   },
   deliveryLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    letterSpacing: 0.2,
+    marginBottom: 2,
   },
   deliveryAddress: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   deliveryAddressText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#ffffff',
     maxWidth: 200,
+    letterSpacing: 0.3,
   },
   profileButton: {
     position: 'relative',
   },
   profileImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    borderWidth: 2.5,
+    borderColor: 'rgba(255,255,255,0.4)',
   },
   cartBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -6,
+    right: -6,
     backgroundColor: '#ef4444',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    paddingHorizontal: 6,
+    borderWidth: 2.5,
     borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cartBadgeText: {
     color: '#ffffff',
@@ -421,69 +436,86 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
+  },
+  searchBarBlur: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   searchBar: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    height: 48,
-    gap: 10,
+    paddingHorizontal: 16,
+    height: 52,
+    gap: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: '#ffffff',
+    letterSpacing: 0.2,
   },
   filterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 16,
+    paddingTop: 20,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
+    letterSpacing: 0.4,
   },
   seeAll: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   cuisinesContainer: {
     paddingHorizontal: 20,
-    gap: 10,
+    gap: 12,
   },
   cuisineItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 24,
-    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 28,
+    gap: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   cuisineName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   favoritesContainer: {
     paddingHorizontal: 20,
@@ -505,17 +537,20 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: 56,
     paddingHorizontal: 20,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 20,
+    marginBottom: 10,
+    letterSpacing: 0.3,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     textAlign: 'center',
+    lineHeight: 22,
+    letterSpacing: 0.2,
   },
 });

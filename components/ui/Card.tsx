@@ -26,8 +26,10 @@ export function Card({
   const handlePressIn = () => {
     if (onPress) {
       Animated.spring(scaleAnim, {
-        toValue: 0.98,
+        toValue: 0.97,
         useNativeDriver: true,
+        tension: 300,
+        friction: 10,
       }).start();
     }
   };
@@ -36,8 +38,9 @@ export function Card({
     if (onPress) {
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 3,
         useNativeDriver: true,
+        tension: 300,
+        friction: 10,
       }).start();
     }
   };
@@ -51,7 +54,7 @@ export function Card({
       case 'md':
         return { padding: 16 };
       case 'lg':
-        return { padding: 20 };
+        return { padding: 24 };
     }
   };
 
@@ -60,11 +63,11 @@ export function Card({
       case 'elevated':
         return {
           backgroundColor: colors.cardElevated,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.3 : 0.12,
-          shadowRadius: 12,
-          elevation: 8,
+          shadowColor: colors.shadowStrong,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 1,
+          shadowRadius: 16,
+          elevation: 12,
         };
       case 'gradient':
         return {
@@ -73,11 +76,11 @@ export function Card({
       default:
         return {
           backgroundColor: colors.card,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDark ? 0.2 : 0.08,
-          shadowRadius: 8,
-          elevation: 4,
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 12,
+          elevation: 6,
         };
     }
   };
@@ -120,10 +123,10 @@ export function Card({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 20,
   },
   gradient: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 20,
   },
 });

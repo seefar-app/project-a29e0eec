@@ -48,16 +48,19 @@ export function Button({
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.96,
+      toValue: 0.95,
       useNativeDriver: true,
+      tension: 300,
+      friction: 10,
     }).start();
   };
 
   const handlePressOut = () => {
     Animated.spring(scaleAnim, {
       toValue: 1,
-      friction: 3,
       useNativeDriver: true,
+      tension: 300,
+      friction: 10,
     }).start();
   };
 
@@ -74,6 +77,11 @@ export function Button({
         return {
           container: {
             backgroundColor: colors.primary,
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 6,
           },
           text: {
             color: '#ffffff',
@@ -83,6 +91,11 @@ export function Button({
         return {
           container: {
             backgroundColor: colors.secondary,
+            shadowColor: colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
           },
           text: {
             color: colors.primary,
@@ -92,7 +105,7 @@ export function Button({
         return {
           container: {
             backgroundColor: 'transparent',
-            borderWidth: 1.5,
+            borderWidth: 2,
             borderColor: colors.primary,
           },
           text: {
@@ -112,6 +125,11 @@ export function Button({
         return {
           container: {
             backgroundColor: colors.error,
+            shadowColor: colors.error,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 6,
           },
           text: {
             color: '#ffffff',
@@ -129,20 +147,20 @@ export function Button({
     switch (size) {
       case 'sm':
         return {
-          container: { paddingVertical: 8, paddingHorizontal: 16 },
-          text: { fontSize: 14 },
+          container: { paddingVertical: 10, paddingHorizontal: 18, height: 40 },
+          text: { fontSize: 14, fontWeight: '600', letterSpacing: 0.3 },
           iconSize: 16,
         };
       case 'md':
         return {
-          container: { paddingVertical: 12, paddingHorizontal: 20 },
-          text: { fontSize: 16 },
+          container: { paddingVertical: 14, paddingHorizontal: 24, height: 50 },
+          text: { fontSize: 16, fontWeight: '600', letterSpacing: 0.4 },
           iconSize: 20,
         };
       case 'lg':
         return {
-          container: { paddingVertical: 16, paddingHorizontal: 24 },
-          text: { fontSize: 18 },
+          container: { paddingVertical: 18, paddingHorizontal: 32, height: 58 },
+          text: { fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
           iconSize: 24,
         };
     }
@@ -206,7 +224,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
