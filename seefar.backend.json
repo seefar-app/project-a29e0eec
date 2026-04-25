@@ -1,0 +1,733 @@
+{
+  "version": "1.0",
+  "generatedAt": "2026-04-25T10:50:49.744Z",
+  "schema": {
+    "sql": "-- Supabase PostgreSQL DDL for Food Delivery Platform\n-- Generated for project-a29e0eec\n\n-- Enable UUID extension\nCREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";\n\n-- Users table\nCREATE TABLE IF NOT EXISTS public.users (\n  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,\n  name text,\n  email text UNIQUE,\n  phone text,\n  avatar text,\n  \"defaultAddressId\" text,\n  \"walletBalance\" numeric DEFAULT 0,\n  \"referralCode\" text,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.users ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view own profile\" ON public.users\n  FOR SELECT USING (auth.uid() = id);\n\nCREATE POLICY \"Users can update own profile\" ON public.users\n  FOR UPDATE USING (auth.uid() = id);\n\nCREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);\nCREATE INDEX IF NOT EXISTS idx_users_referral_code ON public.users(\"referralCode\");\n\n-- Addresses table\nCREATE TABLE IF NOT EXISTS public.addresses (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"userId\" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,\n  label text,\n  street text,\n  city text,\n  \"zipCode\" text,\n  latitude numeric,\n  longitude numeric,\n  \"isDefault\" boolean DEFAULT false,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view own addresses\" ON public.addresses\n  FOR SELECT USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can insert own addresses\" ON public.addresses\n  FOR INSERT WITH CHECK (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can update own addresses\" ON public.addresses\n  FOR UPDATE USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can delete own addresses\" ON public.addresses\n  FOR DELETE USING (auth.uid() = \"userId\");\n\nCREATE INDEX IF NOT EXISTS idx_addresses_user_id ON public.addresses(\"userId\");\nCREATE INDEX IF NOT EXISTS idx_addresses_is_default ON public.addresses(\"isDefault\");\n\n-- Payment Methods table\nCREATE TABLE IF NOT EXISTS public.\"paymentMethods\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"userId\" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,\n  type text,\n  \"cardLast4\" text,\n  \"cardBrand\" text,\n  \"cardExpiry\" text,\n  \"isDefault\" boolean DEFAULT false,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.\"paymentMethods\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view own payment methods\" ON public.\"paymentMethods\"\n  FOR SELECT USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can insert own payment methods\" ON public.\"paymentMethods\"\n  FOR INSERT WITH CHECK (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can update own payment methods\" ON public.\"paymentMethods\"\n  FOR UPDATE USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can delete own payment methods\" ON public.\"paymentMethods\"\n  FOR DELETE USING (auth.uid() = \"userId\");\n\nCREATE INDEX IF NOT EXISTS idx_payment_methods_user_id ON public.\"paymentMethods\"(\"userId\");\n\n-- Restaurants table\nCREATE TABLE IF NOT EXISTS public.restaurants (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  name text NOT NULL,\n  cuisine text[],\n  rating numeric,\n  \"reviewCount\" integer DEFAULT 0,\n  \"deliveryTime\" text,\n  \"deliveryFee\" numeric,\n  \"minOrder\" numeric,\n  \"isOpen\" boolean DEFAULT true,\n  \"imageUrl\" text,\n  address text,\n  latitude numeric,\n  longitude numeric,\n  distance text,\n  \"priceRange\" text,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.restaurants ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Anyone can view restaurants\" ON public.restaurants\n  FOR SELECT USING (true);\n\nCREATE INDEX IF NOT EXISTS idx_restaurants_name ON public.restaurants(name);\nCREATE INDEX IF NOT EXISTS idx_restaurants_is_open ON public.restaurants(\"isOpen\");\nCREATE INDEX IF NOT EXISTS idx_restaurants_rating ON public.restaurants(rating DESC);\n\n-- Menu Items table\nCREATE TABLE IF NOT EXISTS public.\"menuItems\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"restaurantId\" uuid NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,\n  name text NOT NULL,\n  description text,\n  price numeric NOT NULL,\n  \"imageUrl\" text,\n  category text,\n  \"isVegetarian\" boolean DEFAULT false,\n  \"isVegan\" boolean DEFAULT false,\n  \"isGlutenFree\" boolean DEFAULT false,\n  \"isAvailable\" boolean DEFAULT true,\n  calories integer,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.\"menuItems\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Anyone can view menu items\" ON public.\"menuItems\"\n  FOR SELECT USING (true);\n\nCREATE INDEX IF NOT EXISTS idx_menu_items_restaurant_id ON public.\"menuItems\"(\"restaurantId\");\nCREATE INDEX IF NOT EXISTS idx_menu_items_category ON public.\"menuItems\"(category);\nCREATE INDEX IF NOT EXISTS idx_menu_items_is_available ON public.\"menuItems\"(\"isAvailable\");\n\n-- Orders table\nCREATE TABLE IF NOT EXISTS public.orders (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"userId\" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,\n  \"restaurantId\" uuid NOT NULL REFERENCES public.restaurants(id) ON DELETE RESTRICT,\n  \"totalPrice\" numeric NOT NULL,\n  subtotal numeric,\n  tax numeric,\n  \"deliveryFee\" numeric,\n  discount numeric DEFAULT 0,\n  \"promoCode\" text,\n  status text DEFAULT 'pending',\n  \"deliveryAddressId\" uuid REFERENCES public.addresses(id) ON DELETE SET NULL,\n  \"paymentMethodId\" uuid REFERENCES public.\"paymentMethods\"(id) ON DELETE SET NULL,\n  \"estimatedDeliveryTime\" timestamptz,\n  \"actualDeliveryTime\" timestamptz,\n  \"deliveryPartnerId\" uuid,\n  rating integer,\n  review text,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view own orders\" ON public.orders\n  FOR SELECT USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can insert own orders\" ON public.orders\n  FOR INSERT WITH CHECK (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can update own orders\" ON public.orders\n  FOR UPDATE USING (auth.uid() = \"userId\");\n\nCREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(\"userId\");\nCREATE INDEX IF NOT EXISTS idx_orders_restaurant_id ON public.orders(\"restaurantId\");\nCREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);\nCREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);\n\n-- Order Items table\nCREATE TABLE IF NOT EXISTS public.\"orderItems\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"orderId\" uuid NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,\n  \"menuItemId\" uuid NOT NULL REFERENCES public.\"menuItems\"(id) ON DELETE RESTRICT,\n  quantity integer NOT NULL,\n  \"specialInstructions\" text,\n  \"totalPrice\" numeric NOT NULL,\n  created_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.\"orderItems\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view order items for own orders\" ON public.\"orderItems\"\n  FOR SELECT USING (\n    \"orderId\" IN (\n      SELECT id FROM public.orders WHERE \"userId\" = auth.uid()\n    )\n  );\n\nCREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.\"orderItems\"(\"orderId\");\nCREATE INDEX IF NOT EXISTS idx_order_items_menu_item_id ON public.\"orderItems\"(\"menuItemId\");\n\n-- Order Item Customizations table\nCREATE TABLE IF NOT EXISTS public.\"orderItemCustomizations\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"orderItemId\" uuid NOT NULL REFERENCES public.\"orderItems\"(id) ON DELETE CASCADE,\n  \"groupId\" text,\n  \"groupName\" text,\n  \"optionId\" text,\n  \"optionName\" text,\n  price numeric,\n  created_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.\"orderItemCustomizations\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view customizations for own orders\" ON public.\"orderItemCustomizations\"\n  FOR SELECT USING (\n    \"orderItemId\" IN (\n      SELECT id FROM public.\"orderItems\" WHERE \"orderId\" IN (\n        SELECT id FROM public.orders WHERE \"userId\" = auth.uid()\n      )\n    )\n  );\n\nCREATE INDEX IF NOT EXISTS idx_order_item_customizations_order_item_id ON public.\"orderItemCustomizations\"(\"orderItemId\");\n\n-- Order Status History table\nCREATE TABLE IF NOT EXISTS public.\"orderStatusHistory\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"orderId\" uuid NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,\n  status text NOT NULL,\n  message text,\n  \"timestamp\" timestamptz DEFAULT now(),\n  created_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.\"orderStatusHistory\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view status history for own orders\" ON public.\"orderStatusHistory\"\n  FOR SELECT USING (\n    \"orderId\" IN (\n      SELECT id FROM public.orders WHERE \"userId\" = auth.uid()\n    )\n  );\n\nCREATE INDEX IF NOT EXISTS idx_order_status_history_order_id ON public.\"orderStatusHistory\"(\"orderId\");\nCREATE INDEX IF NOT EXISTS idx_order_status_history_timestamp ON public.\"orderStatusHistory\"(\"timestamp\" DESC);\n\n-- Delivery Partners table\nCREATE TABLE IF NOT EXISTS public.\"deliveryPartners\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  name text NOT NULL,\n  phone text,\n  avatar text,\n  latitude numeric,\n  longitude numeric,\n  rating numeric,\n  \"vehicleType\" text,\n  \"vehiclePlate\" text,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.\"deliveryPartners\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Anyone can view delivery partners\" ON public.\"deliveryPartners\"\n  FOR SELECT USING (true);\n\nCREATE INDEX IF NOT EXISTS idx_delivery_partners_rating ON public.\"deliveryPartners\"(rating DESC);\n\n-- Promo Codes table\nCREATE TABLE IF NOT EXISTS public.\"promoCodes\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  code text UNIQUE NOT NULL,\n  \"discountType\" text,\n  \"discountValue\" numeric NOT NULL,\n  \"minOrderAmount\" numeric,\n  \"maxDiscount\" numeric,\n  \"expiresAt\" timestamptz,\n  \"isValid\" boolean DEFAULT true,\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.\"promoCodes\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Anyone can view valid promo codes\" ON public.\"promoCodes\"\n  FOR SELECT USING (\"isValid\" = true AND (\"expiresAt\" IS NULL OR \"expiresAt\" > now()));\n\nCREATE INDEX IF NOT EXISTS idx_promo_codes_code ON public.\"promoCodes\"(code);\nCREATE INDEX IF NOT EXISTS idx_promo_codes_is_valid ON public.\"promoCodes\"(\"isValid\");\n\n-- Reviews table\nCREATE TABLE IF NOT EXISTS public.reviews (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"userId\" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,\n  \"userName\" text,\n  \"userAvatar\" text,\n  \"restaurantId\" uuid NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,\n  \"orderId\" uuid REFERENCES public.orders(id) ON DELETE SET NULL,\n  rating integer NOT NULL,\n  text text,\n  \"imageUrls\" text[],\n  created_at timestamptz DEFAULT now(),\n  updated_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Anyone can view reviews\" ON public.reviews\n  FOR SELECT USING (true);\n\nCREATE POLICY \"Users can insert own reviews\" ON public.reviews\n  FOR INSERT WITH CHECK (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can update own reviews\" ON public.reviews\n  FOR UPDATE USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can delete own reviews\" ON public.reviews\n  FOR DELETE USING (auth.uid() = \"userId\");\n\nCREATE INDEX IF NOT EXISTS idx_reviews_restaurant_id ON public.reviews(\"restaurantId\");\nCREATE INDEX IF NOT EXISTS idx_reviews_user_id ON public.reviews(\"userId\");\nCREATE INDEX IF NOT EXISTS idx_reviews_rating ON public.reviews(rating DESC);\nCREATE INDEX IF NOT EXISTS idx_reviews_created_at ON public.reviews(created_at DESC);\n\n-- Notifications table\nCREATE TABLE IF NOT EXISTS public.notifications (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"userId\" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,\n  title text,\n  body text,\n  type text,\n  \"orderId\" uuid REFERENCES public.orders(id) ON DELETE SET NULL,\n  \"isRead\" boolean DEFAULT false,\n  created_at timestamptz DEFAULT now()\n);\n\nALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view own notifications\" ON public.notifications\n  FOR SELECT USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can update own notifications\" ON public.notifications\n  FOR UPDATE USING (auth.uid() = \"userId\");\n\nCREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(\"userId\");\nCREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(\"isRead\");\nCREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at DESC);\n\n-- User Favorites table\nCREATE TABLE IF NOT EXISTS public.\"userFavorites\" (\n  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),\n  \"userId\" uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,\n  \"restaurantId\" uuid NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,\n  created_at timestamptz DEFAULT now(),\n  UNIQUE(\"userId\", \"restaurantId\")\n);\n\nALTER TABLE public.\"userFavorites\" ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Users can view own favorites\" ON public.\"userFavorites\"\n  FOR SELECT USING (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can insert own favorites\" ON public.\"userFavorites\"\n  FOR INSERT WITH CHECK (auth.uid() = \"userId\");\n\nCREATE POLICY \"Users can delete own favorites\" ON public.\"userFavorites\"\n  FOR DELETE USING (auth.uid() = \"userId\");\n\nCREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON public.\"userFavorites\"(\"userId\");\nCREATE INDEX IF NOT EXISTS idx_user_favorites_restaurant_id ON public.\"userFavorites\"(\"restaurantId\");\n\n-- Handle new user creation from auth.users\nCREATE OR REPLACE FUNCTION public.handle_new_user()\nRETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$\nBEGIN\n  INSERT INTO public.users (id, email, name, phone, avatar, \"defaultAddressId\", \"walletBalance\", \"referralCode\", created_at, updated_at)\n  VALUES (\n    NEW.id,\n    NEW.email,\n    NEW.raw_user_meta_data ->> 'name',\n    NEW.raw_user_meta_data ->> 'phone',\n    NEW.raw_user_meta_data ->> 'avatar',\n    NEW.raw_user_meta_data ->> 'defaultAddressId',\n    COALESCE((NEW.raw_user_meta_data ->> 'walletBalance')::numeric, 0),\n    NEW.raw_user_meta_data ->> 'referralCode',\n    now(),\n    now()\n  )\n  ON CONFLICT (id) DO NOTHING;\n  RETURN NEW;\nEND; $$;\n\nDROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;\nCREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();\n\n-- === Deterministic CRUD policies for user-owned tables (generated by SupabaseConfigAgent) ===\n-- Every table with a direct or transitive ownership path to auth.users gets INSERT/UPDATE/DELETE\n-- policies so client-side writes by the owner succeed while cross-user writes are blocked.\n-- Idempotent: safe to re-run.\nDROP POLICY IF EXISTS \"Users can insert own addresses\" ON public.\"addresses\";\nCREATE POLICY \"Users can insert own addresses\" ON public.\"addresses\" FOR INSERT WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can update own addresses\" ON public.\"addresses\";\nCREATE POLICY \"Users can update own addresses\" ON public.\"addresses\" FOR UPDATE USING (auth.uid() = \"userId\") WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can delete own addresses\" ON public.\"addresses\";\nCREATE POLICY \"Users can delete own addresses\" ON public.\"addresses\" FOR DELETE USING (auth.uid() = \"userId\");\n\nDROP POLICY IF EXISTS \"Users can insert own paymentMethods\" ON public.\"paymentMethods\";\nCREATE POLICY \"Users can insert own paymentMethods\" ON public.\"paymentMethods\" FOR INSERT WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can update own paymentMethods\" ON public.\"paymentMethods\";\nCREATE POLICY \"Users can update own paymentMethods\" ON public.\"paymentMethods\" FOR UPDATE USING (auth.uid() = \"userId\") WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can delete own paymentMethods\" ON public.\"paymentMethods\";\nCREATE POLICY \"Users can delete own paymentMethods\" ON public.\"paymentMethods\" FOR DELETE USING (auth.uid() = \"userId\");\n\nDROP POLICY IF EXISTS \"Users can insert own orders\" ON public.\"orders\";\nCREATE POLICY \"Users can insert own orders\" ON public.\"orders\" FOR INSERT WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can update own orders\" ON public.\"orders\";\nCREATE POLICY \"Users can update own orders\" ON public.\"orders\" FOR UPDATE USING (auth.uid() = \"userId\") WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can delete own orders\" ON public.\"orders\";\nCREATE POLICY \"Users can delete own orders\" ON public.\"orders\" FOR DELETE USING (auth.uid() = \"userId\");\n\nDROP POLICY IF EXISTS \"Users can insert own orderItems\" ON public.\"orderItems\";\nCREATE POLICY \"Users can insert own orderItems\" ON public.\"orderItems\" FOR INSERT WITH CHECK (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid()));\nDROP POLICY IF EXISTS \"Users can update own orderItems\" ON public.\"orderItems\";\nCREATE POLICY \"Users can update own orderItems\" ON public.\"orderItems\" FOR UPDATE USING (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid())) WITH CHECK (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid()));\nDROP POLICY IF EXISTS \"Users can delete own orderItems\" ON public.\"orderItems\";\nCREATE POLICY \"Users can delete own orderItems\" ON public.\"orderItems\" FOR DELETE USING (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid()));\n\nDROP POLICY IF EXISTS \"Users can insert own orderStatusHistory\" ON public.\"orderStatusHistory\";\nCREATE POLICY \"Users can insert own orderStatusHistory\" ON public.\"orderStatusHistory\" FOR INSERT WITH CHECK (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid()));\nDROP POLICY IF EXISTS \"Users can update own orderStatusHistory\" ON public.\"orderStatusHistory\";\nCREATE POLICY \"Users can update own orderStatusHistory\" ON public.\"orderStatusHistory\" FOR UPDATE USING (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid())) WITH CHECK (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid()));\nDROP POLICY IF EXISTS \"Users can delete own orderStatusHistory\" ON public.\"orderStatusHistory\";\nCREATE POLICY \"Users can delete own orderStatusHistory\" ON public.\"orderStatusHistory\" FOR DELETE USING (\"orderId\" IN (SELECT \"id\" FROM public.\"orders\" WHERE \"userId\" = auth.uid()));\n\nDROP POLICY IF EXISTS \"Users can insert own reviews\" ON public.\"reviews\";\nCREATE POLICY \"Users can insert own reviews\" ON public.\"reviews\" FOR INSERT WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can update own reviews\" ON public.\"reviews\";\nCREATE POLICY \"Users can update own reviews\" ON public.\"reviews\" FOR UPDATE USING (auth.uid() = \"userId\") WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can delete own reviews\" ON public.\"reviews\";\nCREATE POLICY \"Users can delete own reviews\" ON public.\"reviews\" FOR DELETE USING (auth.uid() = \"userId\");\n\nDROP POLICY IF EXISTS \"Users can insert own notifications\" ON public.\"notifications\";\nCREATE POLICY \"Users can insert own notifications\" ON public.\"notifications\" FOR INSERT WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can update own notifications\" ON public.\"notifications\";\nCREATE POLICY \"Users can update own notifications\" ON public.\"notifications\" FOR UPDATE USING (auth.uid() = \"userId\") WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can delete own notifications\" ON public.\"notifications\";\nCREATE POLICY \"Users can delete own notifications\" ON public.\"notifications\" FOR DELETE USING (auth.uid() = \"userId\");\n\nDROP POLICY IF EXISTS \"Users can insert own userFavorites\" ON public.\"userFavorites\";\nCREATE POLICY \"Users can insert own userFavorites\" ON public.\"userFavorites\" FOR INSERT WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can update own userFavorites\" ON public.\"userFavorites\";\nCREATE POLICY \"Users can update own userFavorites\" ON public.\"userFavorites\" FOR UPDATE USING (auth.uid() = \"userId\") WITH CHECK (auth.uid() = \"userId\");\nDROP POLICY IF EXISTS \"Users can delete own userFavorites\" ON public.\"userFavorites\";\nCREATE POLICY \"Users can delete own userFavorites\" ON public.\"userFavorites\" FOR DELETE USING (auth.uid() = \"userId\");\n\n\n-- === Deterministic storage.objects policies (generated by SupabaseConfigAgent) ===\n-- Every declared bucket gets owner-scoped INSERT/UPDATE/DELETE policies using the\n-- first path segment as the owner uid. Public buckets additionally get public-read\n-- SELECT so getPublicUrl(...) resolves instead of returning \"Bucket not found\" 404.\n-- Idempotent: safe to re-run.\nDROP POLICY IF EXISTS \"restaurant-images_public_read\" ON storage.objects;\nCREATE POLICY \"restaurant-images_public_read\" ON storage.objects FOR SELECT TO public USING (bucket_id = 'restaurant-images');\nDROP POLICY IF EXISTS \"restaurant-images_owner_insert\" ON storage.objects;\nCREATE POLICY \"restaurant-images_owner_insert\" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'restaurant-images' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"restaurant-images_owner_update\" ON storage.objects;\nCREATE POLICY \"restaurant-images_owner_update\" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'restaurant-images' AND (storage.foldername(name))[1] = auth.uid()::text) WITH CHECK (bucket_id = 'restaurant-images' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"restaurant-images_owner_delete\" ON storage.objects;\nCREATE POLICY \"restaurant-images_owner_delete\" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'restaurant-images' AND (storage.foldername(name))[1] = auth.uid()::text);\n\nDROP POLICY IF EXISTS \"menu-item-images_public_read\" ON storage.objects;\nCREATE POLICY \"menu-item-images_public_read\" ON storage.objects FOR SELECT TO public USING (bucket_id = 'menu-item-images');\nDROP POLICY IF EXISTS \"menu-item-images_owner_insert\" ON storage.objects;\nCREATE POLICY \"menu-item-images_owner_insert\" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'menu-item-images' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"menu-item-images_owner_update\" ON storage.objects;\nCREATE POLICY \"menu-item-images_owner_update\" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'menu-item-images' AND (storage.foldername(name))[1] = auth.uid()::text) WITH CHECK (bucket_id = 'menu-item-images' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"menu-item-images_owner_delete\" ON storage.objects;\nCREATE POLICY \"menu-item-images_owner_delete\" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'menu-item-images' AND (storage.foldername(name))[1] = auth.uid()::text);\n\nDROP POLICY IF EXISTS \"user-avatars_public_read\" ON storage.objects;\nCREATE POLICY \"user-avatars_public_read\" ON storage.objects FOR SELECT TO public USING (bucket_id = 'user-avatars');\nDROP POLICY IF EXISTS \"user-avatars_owner_insert\" ON storage.objects;\nCREATE POLICY \"user-avatars_owner_insert\" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'user-avatars' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"user-avatars_owner_update\" ON storage.objects;\nCREATE POLICY \"user-avatars_owner_update\" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'user-avatars' AND (storage.foldername(name))[1] = auth.uid()::text) WITH CHECK (bucket_id = 'user-avatars' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"user-avatars_owner_delete\" ON storage.objects;\nCREATE POLICY \"user-avatars_owner_delete\" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'user-avatars' AND (storage.foldername(name))[1] = auth.uid()::text);\n\nDROP POLICY IF EXISTS \"review-images_public_read\" ON storage.objects;\nCREATE POLICY \"review-images_public_read\" ON storage.objects FOR SELECT TO public USING (bucket_id = 'review-images');\nDROP POLICY IF EXISTS \"review-images_owner_insert\" ON storage.objects;\nCREATE POLICY \"review-images_owner_insert\" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'review-images' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"review-images_owner_update\" ON storage.objects;\nCREATE POLICY \"review-images_owner_update\" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'review-images' AND (storage.foldername(name))[1] = auth.uid()::text) WITH CHECK (bucket_id = 'review-images' AND (storage.foldername(name))[1] = auth.uid()::text);\nDROP POLICY IF EXISTS \"review-images_owner_delete\" ON storage.objects;\nCREATE POLICY \"review-images_owner_delete\" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'review-images' AND (storage.foldername(name))[1] = auth.uid()::text);\n",
+    "tables": [
+      {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "email",
+            "type": "text"
+          },
+          {
+            "name": "phone",
+            "type": "text"
+          },
+          {
+            "name": "avatar",
+            "type": "text"
+          },
+          {
+            "name": "defaultAddressId",
+            "type": "text"
+          },
+          {
+            "name": "walletBalance",
+            "type": "numeric"
+          },
+          {
+            "name": "referralCode",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "addresses",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "userId",
+            "type": "uuid"
+          },
+          {
+            "name": "label",
+            "type": "text"
+          },
+          {
+            "name": "street",
+            "type": "text"
+          },
+          {
+            "name": "city",
+            "type": "text"
+          },
+          {
+            "name": "zipCode",
+            "type": "text"
+          },
+          {
+            "name": "latitude",
+            "type": "numeric"
+          },
+          {
+            "name": "longitude",
+            "type": "numeric"
+          },
+          {
+            "name": "isDefault",
+            "type": "boolean"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "paymentMethods",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "userId",
+            "type": "uuid"
+          },
+          {
+            "name": "type",
+            "type": "text"
+          },
+          {
+            "name": "cardLast4",
+            "type": "text"
+          },
+          {
+            "name": "cardBrand",
+            "type": "text"
+          },
+          {
+            "name": "cardExpiry",
+            "type": "text"
+          },
+          {
+            "name": "isDefault",
+            "type": "boolean"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "restaurants",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "cuisine",
+            "type": "text[]"
+          },
+          {
+            "name": "rating",
+            "type": "numeric"
+          },
+          {
+            "name": "reviewCount",
+            "type": "integer"
+          },
+          {
+            "name": "deliveryTime",
+            "type": "text"
+          },
+          {
+            "name": "deliveryFee",
+            "type": "numeric"
+          },
+          {
+            "name": "minOrder",
+            "type": "numeric"
+          },
+          {
+            "name": "isOpen",
+            "type": "boolean"
+          },
+          {
+            "name": "imageUrl",
+            "type": "text"
+          },
+          {
+            "name": "address",
+            "type": "text"
+          },
+          {
+            "name": "latitude",
+            "type": "numeric"
+          },
+          {
+            "name": "longitude",
+            "type": "numeric"
+          },
+          {
+            "name": "distance",
+            "type": "text"
+          },
+          {
+            "name": "priceRange",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "menuItems",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "restaurantId",
+            "type": "uuid"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "description",
+            "type": "text"
+          },
+          {
+            "name": "price",
+            "type": "numeric"
+          },
+          {
+            "name": "imageUrl",
+            "type": "text"
+          },
+          {
+            "name": "category",
+            "type": "text"
+          },
+          {
+            "name": "isVegetarian",
+            "type": "boolean"
+          },
+          {
+            "name": "isVegan",
+            "type": "boolean"
+          },
+          {
+            "name": "isGlutenFree",
+            "type": "boolean"
+          },
+          {
+            "name": "isAvailable",
+            "type": "boolean"
+          },
+          {
+            "name": "calories",
+            "type": "integer"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "userId",
+            "type": "uuid"
+          },
+          {
+            "name": "restaurantId",
+            "type": "uuid"
+          },
+          {
+            "name": "totalPrice",
+            "type": "numeric"
+          },
+          {
+            "name": "subtotal",
+            "type": "numeric"
+          },
+          {
+            "name": "tax",
+            "type": "numeric"
+          },
+          {
+            "name": "deliveryFee",
+            "type": "numeric"
+          },
+          {
+            "name": "discount",
+            "type": "numeric"
+          },
+          {
+            "name": "promoCode",
+            "type": "text"
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "deliveryAddressId",
+            "type": "uuid"
+          },
+          {
+            "name": "paymentMethodId",
+            "type": "uuid"
+          },
+          {
+            "name": "estimatedDeliveryTime",
+            "type": "timestamptz"
+          },
+          {
+            "name": "actualDeliveryTime",
+            "type": "timestamptz"
+          },
+          {
+            "name": "deliveryPartnerId",
+            "type": "uuid"
+          },
+          {
+            "name": "rating",
+            "type": "integer"
+          },
+          {
+            "name": "review",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "orderItems",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "orderId",
+            "type": "uuid"
+          },
+          {
+            "name": "menuItemId",
+            "type": "uuid"
+          },
+          {
+            "name": "quantity",
+            "type": "integer"
+          },
+          {
+            "name": "specialInstructions",
+            "type": "text"
+          },
+          {
+            "name": "totalPrice",
+            "type": "numeric"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "orderItemCustomizations",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "orderItemId",
+            "type": "uuid"
+          },
+          {
+            "name": "groupId",
+            "type": "text"
+          },
+          {
+            "name": "groupName",
+            "type": "text"
+          },
+          {
+            "name": "optionId",
+            "type": "text"
+          },
+          {
+            "name": "optionName",
+            "type": "text"
+          },
+          {
+            "name": "price",
+            "type": "numeric"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "orderStatusHistory",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "orderId",
+            "type": "uuid"
+          },
+          {
+            "name": "status",
+            "type": "text"
+          },
+          {
+            "name": "message",
+            "type": "text"
+          },
+          {
+            "name": "timestamp",
+            "type": "timestamptz"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "deliveryPartners",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "phone",
+            "type": "text"
+          },
+          {
+            "name": "avatar",
+            "type": "text"
+          },
+          {
+            "name": "latitude",
+            "type": "numeric"
+          },
+          {
+            "name": "longitude",
+            "type": "numeric"
+          },
+          {
+            "name": "rating",
+            "type": "numeric"
+          },
+          {
+            "name": "vehicleType",
+            "type": "text"
+          },
+          {
+            "name": "vehiclePlate",
+            "type": "text"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "promoCodes",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "code",
+            "type": "text"
+          },
+          {
+            "name": "discountType",
+            "type": "text"
+          },
+          {
+            "name": "discountValue",
+            "type": "numeric"
+          },
+          {
+            "name": "minOrderAmount",
+            "type": "numeric"
+          },
+          {
+            "name": "maxDiscount",
+            "type": "numeric"
+          },
+          {
+            "name": "expiresAt",
+            "type": "timestamptz"
+          },
+          {
+            "name": "isValid",
+            "type": "boolean"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "reviews",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "userId",
+            "type": "uuid"
+          },
+          {
+            "name": "userName",
+            "type": "text"
+          },
+          {
+            "name": "userAvatar",
+            "type": "text"
+          },
+          {
+            "name": "restaurantId",
+            "type": "uuid"
+          },
+          {
+            "name": "orderId",
+            "type": "uuid"
+          },
+          {
+            "name": "rating",
+            "type": "integer"
+          },
+          {
+            "name": "text",
+            "type": "text"
+          },
+          {
+            "name": "imageUrls",
+            "type": "text[]"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "notifications",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "userId",
+            "type": "uuid"
+          },
+          {
+            "name": "title",
+            "type": "text"
+          },
+          {
+            "name": "body",
+            "type": "text"
+          },
+          {
+            "name": "type",
+            "type": "text"
+          },
+          {
+            "name": "orderId",
+            "type": "uuid"
+          },
+          {
+            "name": "isRead",
+            "type": "boolean"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          }
+        ]
+      },
+      {
+        "name": "userFavorites",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid"
+          },
+          {
+            "name": "userId",
+            "type": "uuid"
+          },
+          {
+            "name": "restaurantId",
+            "type": "uuid"
+          },
+          {
+            "name": "created_at",
+            "type": "timestamptz"
+          }
+        ]
+      }
+    ]
+  },
+  "auth": {
+    "EXTERNAL_EMAIL_ENABLED": true,
+    "MAILER_AUTOCONFIRM": true
+  },
+  "storage": {
+    "buckets": [
+      {
+        "name": "restaurant-images",
+        "public": true,
+        "fileSizeLimit": 52428800,
+        "options": {
+          "public": true,
+          "allowedMimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif"
+          ],
+          "fileSizeLimit": 5242880
+        }
+      },
+      {
+        "name": "menu-item-images",
+        "public": true,
+        "fileSizeLimit": 52428800,
+        "options": {
+          "public": true,
+          "allowedMimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif"
+          ],
+          "fileSizeLimit": 5242880
+        }
+      },
+      {
+        "name": "user-avatars",
+        "public": true,
+        "fileSizeLimit": 10485760,
+        "options": {
+          "public": true,
+          "allowedMimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif"
+          ],
+          "fileSizeLimit": 5242880
+        }
+      },
+      {
+        "name": "review-images",
+        "public": true,
+        "fileSizeLimit": 52428800,
+        "options": {
+          "public": true,
+          "allowedMimeTypes": [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif"
+          ],
+          "fileSizeLimit": 5242880
+        }
+      }
+    ]
+  },
+  "supabase": {
+    "projectRef": "ijxtavhnvzsviqtnqipe",
+    "projectUrl": "https://ijxtavhnvzsviqtnqipe.supabase.co",
+    "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeHRhdmhudnpzdmlxdG5xaXBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwOTE4MTQsImV4cCI6MjA5MjY2NzgxNH0.L2Dn6ijFwN531Gx8FpyQmNM5zPV1tUUAL6-UR5FHXpc",
+    "status": "ready"
+  }
+}
