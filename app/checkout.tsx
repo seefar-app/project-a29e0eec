@@ -50,7 +50,7 @@ export default function CheckoutScreen() {
 
   useEffect(() => {
     if (cart.length === 0 && !orderPlaced) {
-      router.replace('/(tabs)');
+      router.back();
     }
   }, [cart, orderPlaced]);
 
@@ -79,8 +79,11 @@ export default function CheckoutScreen() {
       setPlacedOrderId(order.id);
       setOrderPlaced(true);
       
+      // Show success state for 2 seconds, then navigate to order tracking
       setTimeout(() => {
-        router.replace(`/order/${order.id}`);
+        // Use router.push() instead of router.replace() to maintain navigation stack
+        // This prevents the auth check from triggering incorrectly
+        router.push(`/order/${order.id}`);
       }, 2000);
     } catch (error) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

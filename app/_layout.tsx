@@ -32,7 +32,6 @@ function RootLayoutNav() {
     if (!isAuthenticated && !inAuthGroup && !isOnboarding) {
       router.replace('/(auth)/login');
     } else if (isAuthenticated && (inAuthGroup || isOnboarding)) {
-      // Simple replace without nested params - Expo Router handles tab navigation automatically
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isLoading, segments]);
@@ -64,6 +63,13 @@ function RootLayoutNav() {
         />
         <Stack.Screen 
           name="checkout" 
+          options={{ 
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }} 
+        />
+        <Stack.Screen 
+          name="order/[id]" 
           options={{ 
             presentation: 'card',
             animation: 'slide_from_right',
