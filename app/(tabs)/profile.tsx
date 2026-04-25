@@ -17,6 +17,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { EditProfileModal } from '@/components/shared/EditProfileModal';
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
@@ -29,6 +30,7 @@ export default function ProfileScreen() {
   const [pushNotifications, setPushNotifications] = useState(true);
   const [orderUpdates, setOrderUpdates] = useState(true);
   const [promotions, setPromotions] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
   
   if (!user) {
     return (
@@ -68,6 +70,11 @@ export default function ProfileScreen() {
     );
   };
   
+  const handleEditProfile = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEditModalVisible(true);
+  };
+  
   const menuItems = [
     {
       section: 'Account',
@@ -75,7 +82,7 @@ export default function ProfileScreen() {
         {
           icon: 'person-outline',
           label: 'Edit Profile',
-          onPress: () => console.log('Edit Profile'),
+          onPress: handleEditProfile,
         },
         {
           icon: 'location-outline',
@@ -172,6 +179,12 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
+          <Pressable
+            style={[styles.editButton, { backgroundColor: colors.primaryLight }]}
+            onPress={handleEditProfile}
+          >
+            <Ionicons name="create-outline" size={20} color={colors.primary} />
+          </Pressable>
         </View>
         
         <Card style={styles.profileCard}>
@@ -335,6 +348,11 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
+      
+      <EditProfileModal
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -359,12 +377,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 20,
     paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: '700',
+  },
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileCard: {
     marginHorizontal: 16,
